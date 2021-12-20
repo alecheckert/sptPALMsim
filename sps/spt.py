@@ -164,6 +164,12 @@ class SPTSimulator:
                 bg_profile.shape == self.fov_size
             self.bg_profile = bg_profile
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, traceback):
+        return etype is None
+
     def aggregate(self, grid_image: np.ndarray) -> np.ndarray:
         assert grid_image.shape == self.grid_fov_size 
         result = np.zeros(self.fov_size, dtype=grid_image.dtype)
