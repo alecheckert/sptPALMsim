@@ -115,6 +115,16 @@ class SPTSimulator:
         # Temporal discretization (T)
         self.dt = frame_interval / temporal_bin_rate
 
+        # Region in which to start ("seed") new trajectories, 
+        # chosen to be approximately twice as large as th
+        # optics simulation region
+        fov_size_um = tuple(map(lambda s: s*pixel_size, self.fov_size))
+        self.seed_region = (
+            (-5.0, 5.0),
+            (-fov_size_um[0], fov_size_um[0]*2),
+            (-fov_size_um[1], fov_size_um[1]*2),
+        )
+
         # Optics simulator
         self.optics = Optics(
             wavelength=wavelength,
@@ -141,6 +151,7 @@ class SPTSimulator:
         self.motion = make_motion(
             motion_type=motion_type,
             dt=self.dt,
+            seed_region=self.seed_region,
             **kwargs
         )
 
@@ -199,13 +210,8 @@ class SPTSimulator:
                 point_sources,
                 intensity=self.intensity/match_pulse.sum()
             )
-            print(photons)
-            print(self.bg_profile)
             photons = self.aggregate(photons) + self.bg_profile
-            print(photons)
             movie[p-1,:,:] = self.camera(photons).astype(np.uint16)
-            print(movie[p-1,:,:])
-            print("")
             if self.verbose:
                 print(f"  finished with pulse {p}/{n_pulses}")
 

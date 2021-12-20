@@ -23,7 +23,7 @@ DEFAULT_SEED_REGION = (
 )
 
 # Default emission wavelength in microns
-DEFAULT_WAVELENGTH = 0.59
+DEFAULT_WAVELENGTH = 0.67
 
 # Default numerical aperture
 DEFAULT_NA = 1.49
@@ -31,11 +31,12 @@ DEFAULT_NA = 1.49
 # Default immersion media refractive index
 DEFAULT_REF_INDEX = 1.515
 
-# Discrete z-planes into which to divide the simulation (in microns)
-DEFAULT_Z_LEVELS = np.linspace(-2.5, 2.5, 201)
+# Discretization in the axial dimension (microns, relative to focus 
+# at 0.0)
+DEFAULT_Z_LEVELS = np.linspace(-2.0, 2.0, 200)
 
-# Mean number of photons emitted per particle per frame
-DEFAULT_INTENSITY = 200.0
+# Mean number of photons emitted per particle per pulse
+DEFAULT_INTENSITY = 150.0
 
 # Motion simulator handles
 MOTION_TYPE_BROWNIAN = "brownian"
@@ -47,7 +48,7 @@ DEFAULT_READ_NOISE = 1.0
 
 # Spatial and temporal discretization, per camera pixel or frame interval
 # respectively
-DEFAULT_SPATIAL_BIN_RATE = 4
+DEFAULT_SPATIAL_BIN_RATE = 8
 DEFAULT_TEMPORAL_BIN_RATE = 60
 
 # Default number of "background photons" per pixel, due to 
