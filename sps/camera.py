@@ -50,7 +50,7 @@ class Camera:
     def __call__(self, I: np.ndarray) -> np.ndarray:
         assert I.shape == self.fov_size 
         I[I<0] = 0
-        AU = np.random.poisson(self.gain * I) + self.offset + \
+        AU = self.gain * np.random.poisson(I) + self.offset + \
             np.random.normal(loc=0, scale=self.read_noise)
         AU[AU<0] = 0
         return AU 

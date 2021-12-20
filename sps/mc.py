@@ -32,17 +32,13 @@ class MarkovChain:
             (self.P.sum(axis=1) - np.diagonal(self.P))
 
     def is_diag(self, M: np.ndarray) -> bool:
-        """
-        Return True if a 2D ndarray is diagonal, 0 otherwise.
-
-        """
+        """ Return True if a 2D ndarray is diagonal, 0 otherwise. """
         i, j = np.nonzero(M)
         return np.all(i==j)
 
     @cached_property 
     def stat_dist(self) -> np.ndarray:
-        """
-        Stationary distribution; 1D ndarray of length (n_states,).
+        """ Stationary distribution; 1D ndarray of length (n_states,).
 
         Returns
         -------
@@ -92,7 +88,5 @@ class MarkovChain:
     def __enter__(self):
         return self 
 
-    def __exit__(self, exc_type, exc_val, tb):
-        if not exc_type is None:
-            return False
-        return True 
+    def __exit__(self, etype, evalue, traceback):
+        return etype is None

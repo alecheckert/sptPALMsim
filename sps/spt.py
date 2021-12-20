@@ -22,14 +22,10 @@ from .constants import (
     DEFAULT_OFFSET,
     DEFAULT_GAIN,
     DEFAULT_READ_NOISE,
+    DEFAULT_BG_INTENSITY,
 )
 
 class SPTSimulator:
-    def __init__(self, optics: Optics, camera: Camera, motion: Motion):
-        self.optics = optics 
-        self.camera = camera 
-        self.motion = motion
-
     def __init__(
         self,
         motion_type:       str=MOTION_TYPE_BROWNIAN,
@@ -51,10 +47,11 @@ class SPTSimulator:
         read_noise:        float=DEFAULT_READ_NOISE,
         gpu:               int=None,
         verbose:           bool=True,
+        bg_profile:        np.ndarray=None,
         **kwargs
     ):
         """ Synthesize an SPTSimulator from a set of keyword arguments, instantiating the 
-        underlying Optics, Camera, and Motion from scratch.
+        underlying Optics, Camera, and Motion.
 
         Parameters
         ----------
@@ -147,6 +144,15 @@ class SPTSimulator:
             **kwargs
         )
 
+        # Background profile. If None, then we generate a
+        # uniform background profile
+        if bg_profile is None:
+            self.bg_profile = np.full(self.fov_size, DEFAULT_BG_INTENSITY, dtype=np.float64)
+        else:
+            assert isinstance(bg_profile, np.ndarray) and \
+                bg_profile.shape == self.fov_size
+            self.bg_profile = bg_profile
+
     def aggregate(self, grid_image: np.ndarray) -> np.ndarray:
         assert grid_image.shape == self.grid_fov_size 
         result = np.zeros(self.fov_size, dtype=grid_image.dtype)
@@ -178,19 +184,30 @@ class SPTSimulator:
         n_pulses = pulses.max()
 
         # Simulate trajectories
+        if self.verbose:
+            print("Simulating trajectories...")
         tracks, states = self.motion(n_tracks, n_dt, bleach_rate=self.bleach_rate)
 
         # Simulate SPT movie
+        if self.verbose:
+            print("Simulating optics...")
         movie = np.zeros((n_frames, *self.fov_size), dtype=np.uint16)
         for p in range(1, n_pulses+1):
             match_pulse = pulses == p 
             point_sources = tracks[:,match_pulse,:].reshape((match_pulse.sum() * n_tracks, 3))
-            movie[p-1,:,:] = self.camera(self.aggregate(self.optics.image_point_sources(
+            photons = self.optics.image_point_sources(
                 point_sources,
                 intensity=self.intensity/match_pulse.sum()
-            ))).astype(np.uint16)
+            )
+            print(photons)
+            print(self.bg_profile)
+            photons = self.aggregate(photons) + self.bg_profile
+            print(photons)
+            movie[p-1,:,:] = self.camera(photons).astype(np.uint16)
+            print(movie[p-1,:,:])
+            print("")
             if self.verbose:
-                print(f"finished with pulse {p}/{n_pulses}")
+                print(f"  finished with pulse {p}/{n_pulses}")
 
         # Format ground truth trajectory DataFrame
         n_points = n_tracks * n_dt 
@@ -215,13 +232,4 @@ class SPTSimulator:
         # Alias frame to pulse - 1
         tracks_sum["frame"] = tracks_sum["pulse_idx"] - 1
 
-        # Add background profile
-        # if not bg_movie_path is None:
-        #     movie = self.add_bg_movie(movie, bg_movie_path)
-
         return movie, tracks_sum
-
-
-
-
-

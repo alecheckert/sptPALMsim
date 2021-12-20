@@ -145,6 +145,7 @@ class Optics:
         we want to use a GPU """
         if self.use_gpu:
             xp = cp
+            cp.cuda.Device(self.gpu).use()
         else:
             xp = np 
         return xp

@@ -49,3 +49,7 @@ DEFAULT_READ_NOISE = 1.0
 # respectively
 DEFAULT_SPATIAL_BIN_RATE = 4
 DEFAULT_TEMPORAL_BIN_RATE = 60
+
+# Default number of "background photons" per pixel, due to 
+# sources other than the target
+DEFAULT_BG_INTENSITY = 5.0
