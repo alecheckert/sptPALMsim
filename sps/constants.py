@@ -40,6 +40,7 @@ DEFAULT_INTENSITY = 150.0
 
 # Motion simulator handles
 MOTION_TYPE_BROWNIAN = "brownian"
+MOTION_TYPE_FRACTIONAL_BROWNIAN = "fractional_brownian"
 
 # Default camera parameters; similar to Andor iXon 897 EMCCD
 DEFAULT_OFFSET = 470.0

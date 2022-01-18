@@ -9,6 +9,7 @@ from .constants import (
     DEFAULT_FRAME_INTERVAL,
     DEFAULT_SEED_REGION,
     MOTION_TYPE_BROWNIAN,
+    MOTION_TYPE_FRACTIONAL_BROWNIAN,
 )
 
 class Motion(ABC):
@@ -193,8 +194,110 @@ class BrownianMotion(Motion):
 
         return np.cumsum(tracks, axis=1), states
 
+class FractionalBrownianMotion(Motion):
+    """ Simulator for multi-state fractional Brownian motion *without* state transitions.
+    The trajectories are seeded in a box with edges defined by *roi_limits*.
+
+    Each state is associated with a diffusion coefficient, Hurst parameter, and
+    occupation. This definition of FBM uses a modified Diffusion coefficient:
+
+        modified diff. coef. = (diff. coef.) * dt^(2 * Hurst parameter - 1)
+
+    As a result, the covariance between the i^th and j^th jumps in a trajectory is
+
+        (modified diff. coef.) * dt * ( |i - j + 1|^{2H} + |i - j - 1|^{2H} - 2 * |i - j|^{2H} )
+
+    This definition of the diffusion coefficient has the advantage that it absorbs
+    the contribution of the Hurst parameter to the jump variance. Without this, the 
+    Hurst parameter exerts a strong influence on the jump variance.
+
+    init
+    ----
+        diff_coefs      :   1D ndarray, diffusion coefficients for each 
+                            state in squared microns per second
+
+        hurst_pars      :   1D ndarray, Hurst parameters for each state
+                            (same number of elements as *diff_coefs*)
+
+        state_occs      :   1D ndarray, the occupations of each state 
+                            (same number of elements as *diff_coefs*)
+
+        dt              :   float, simulation time interval in seconds
+    """
+    def __init__(
+        self,
+        diff_coefs: np.ndarray,
+        hurst_pars: np.ndarray,
+        state_occs: np.ndarray,
+        dt: float,
+        seed_region: Tuple[Tuple[int]]=DEFAULT_SEED_REGION
+    ):
+        super().__init__(dt=dt, seed_region=seed_region)
+        self.diff_coefs = np.asarray(diff_coefs)
+        self.hurst_pars = np.asarray(hurst_pars)
+        self.state_occs = np.asarray(state_occs)
+        if self.diff_coefs.shape != self.hurst_pars.shape:
+            raise ValueError(f"incompatible shapes for diff_coefs and " \
+                f"hurst_pars: {diff_coefs.shape}, {hurst_pars.shape}")
+        elif self.diff_coefs.shape != self.hurst_pars.shape:
+            raise ValueError(f"incompatible shapes for diff_coefs and " \
+                f"state_occs: {diff_coefs.shape}, {state_occs.shape}")
+
+    def sim(self, n_tracks: int, n_frames: int) -> (np.ndarray, np.ndarray):
+        """ Simulate multiple trajectories, starting from the origin.
+
+        Parameters
+        ----------
+            n_tracks    :   int, number of tracks to simulate
+            n_frames    :   int, number of frames to simulate
+
+        Returns
+        -------
+            (
+                3D ndarray of shape (n_tracks, n_frames, 3),
+                    the ZYX positions of each trajectory at
+                    each timepoint in microns. All trajectories
+                    start at 0;
+                2D ndarray of shape (n_tracks, n_frames),
+                    the state assignments for each trajectory
+                    at each frame
+            )
+        """
+        def make_covariance_matrix(diff_coef: float, hurst_par: float) -> np.ndarray:
+            """ Generate the covariance matrix for the increments of a fractional Brownian
+            motion with diffusion coefficient *diff_coef* and Hurst parameter *hurst_par*.
+
+            Returns 2D numpy.ndarray of shape (n_frames, n_frames) """
+            diff_coef_mod = diff_coef / np.power(self.dt, 2 * hurst_par - 1)
+            T, S = np.indices((n_frames, n_frames)) + 1
+            C = diff_coef * self.dt * (
+                np.power(np.abs(T - S + 1), 2 * hurst_par) + \
+                np.power(np.abs(T - S - 1), 2 * hurst_par) - \
+                2 * np.power(np.abs(T - S), 2 * hurst_par)
+            )
+            return C
+
+        tracks, states = [], []
+        n_states = self.diff_coefs.shape[0]
+        tracks_per_state = np.random.multinomial(n_tracks, self.state_occs)
+        mean = np.zeros(n_frames, dtype=np.float64)
+
+        for i, n in enumerate(tracks_per_state):
+            T = np.zeros((n, n_frames, 3), dtype=np.float64)
+            cov = make_covariance_matrix(self.diff_coefs[i], self.hurst_pars[i])
+            for d in range(3):
+                T[:,:,d] = np.random.multivariate_normal(mean, cov, size=tracks_per_state[i])
+            tracks.append(T)
+            states.append(np.full((n, n_frames), i, dtype=np.uint16))
+
+        tracks = np.concatenate(tracks, axis=0)
+        states = np.concatenate(states, axis=0)
+
+        return np.cumsum(tracks, axis=1), states
+
 MOTION_TYPES = {
     MOTION_TYPE_BROWNIAN: BrownianMotion,
+    MOTION_TYPE_FRACTIONAL_BROWNIAN: FractionalBrownianMotion,
 }
 
 def make_motion(motion_type: str, dt: float, **kwargs):
