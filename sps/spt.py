@@ -103,6 +103,7 @@ class SPTSimulator:
         self.pulse_width = pulse_width 
         self.bleach_rate = bleach_rate
         self.intensity = intensity
+        self.pixel_size = pixel_size
         self.spatial_bin_rate = spatial_bin_rate
         self.temporal_bin_rate = temporal_bin_rate
         self.fov_size = fov_size 
@@ -195,9 +196,12 @@ class SPTSimulator:
             )
         """
         n_dt = n_frames * self.temporal_bin_rate 
-        T = np.arange(n_dt) * self.dt 
-        in_pulse = (T % self.frame_interval) < self.pulse_width
-        pulses = ndi.label(in_pulse)[0]
+        if self.temporal_bin_rate == 1:
+            pulses = np.arange(1, n_frames + 1)
+        else:
+            T = np.arange(n_dt) * self.dt 
+            in_pulse = (T % self.frame_interval) < self.pulse_width
+            pulses = ndi.label(in_pulse)[0]
         n_pulses = pulses.max()
 
         # Simulate trajectories
@@ -235,6 +239,8 @@ class SPTSimulator:
         tracks_df["z"] = tracks[:,:,0].ravel()
         tracks_df["y"] = tracks[:,:,1].ravel()
         tracks_df["x"] = tracks[:,:,2].ravel()
+        tracks_df["y0"] = tracks_df["y"] / self.pixel_size
+        tracks_df["x0"] = tracks_df["x"] / self.pixel_size
 
         # Format summary trajectories (akin to what would be seen for a typical
         # tracking movie, averaging over positions in each pulse)
