@@ -199,17 +199,13 @@ class FractionalBrownianMotion(Motion):
     The trajectories are seeded in a box with edges defined by *roi_limits*.
 
     Each state is associated with a diffusion coefficient, Hurst parameter, and
-    occupation. This definition of FBM uses a modified Diffusion coefficient:
+    occupation. This definition of FBM uses the following covariance function:
 
-        modified diff. coef. = (diff. coef.) * dt^(2 * Hurst parameter - 1)
+        Cov(jump i, jump j) = D * dt^{2*H-1} * \
+            ( |i-j+1|^{2H} + |i-j-1|^{2H} - |i-j|^{2H} )
 
-    As a result, the covariance between the i^th and j^th jumps in a trajectory is
-
-        (modified diff. coef.) * dt * ( |i - j + 1|^{2H} + |i - j - 1|^{2H} - 2 * |i - j|^{2H} )
-
-    This definition of the diffusion coefficient has the advantage that it absorbs
-    the contribution of the Hurst parameter to the jump variance. Without this, the 
-    Hurst parameter exerts a strong influence on the jump variance.
+    where *i*, *j* are the indices of jumps in the trajectory. Notice that
+    the jump variance is highly dependent on the Hurst parameter.
 
     init
     ----
@@ -266,11 +262,9 @@ class FractionalBrownianMotion(Motion):
         def make_covariance_matrix(diff_coef: float, hurst_par: float) -> np.ndarray:
             """ Generate the covariance matrix for the increments of a fractional Brownian
             motion with diffusion coefficient *diff_coef* and Hurst parameter *hurst_par*.
-
             Returns 2D numpy.ndarray of shape (n_frames, n_frames) """
-            diff_coef_mod = diff_coef / np.power(self.dt, 2 * hurst_par - 1)
             T, S = np.indices((n_frames, n_frames)) + 1
-            C = diff_coef * self.dt * (
+            C = diff_coef * np.power(self.dt, 2 * hurst_par) * (
                 np.power(np.abs(T - S + 1), 2 * hurst_par) + \
                 np.power(np.abs(T - S - 1), 2 * hurst_par) - \
                 2 * np.power(np.abs(T - S), 2 * hurst_par)
