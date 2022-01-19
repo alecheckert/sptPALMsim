@@ -41,7 +41,7 @@ def simulate_two_state():
     n_tracks = 1500
 
     # Index of the GPU to use
-    gpu = 1
+    gpu = 0
 
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
@@ -71,8 +71,6 @@ def simulate_two_state():
                     print(f"  output {movie_path} already exists; moving on")
                     c += 1
                     continue
-                print(f"  movie_path = {movie_path}")
-                print(f"  csv_path = {csv_path}")
                 diff_coefs = np.array([slow_diff_coef, fast_diff_coef])
                 with SPTSimulator(
                     motion_type=MOTION_TYPE_BROWNIAN,

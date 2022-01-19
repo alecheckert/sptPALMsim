@@ -60,8 +60,6 @@ def simulate_variable_pulse_widths():
                 elif c < start_idx:
                     c += 1
                     continue
-                print(f"  movie_path = {movie_path}")
-                print(f"  csv_path = {csv_path}")
                 
                 with SPTSimulator(
                     motion_type=MOTION_TYPE_BROWNIAN,
