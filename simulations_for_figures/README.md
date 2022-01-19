@@ -10,4 +10,4 @@ impractical.
  - `simulate_variable_pulse_widths.py` generates SPT movies with a single Brownian state at various excitation pulse widths, holding the frame interval constant at 20 ms. It is used in Fig. S1.
  - `simulate_two_state.py` generates SPT movies with two Brownian diffusing states, varying the faster state's diffusion coefficient and the fraction of particles in each state. It is used in Fig. S11.
  - `simulate_discrete_dynamic_models.py` generates a sequence of SPT movies with increasingly difficult multi-state Brownian motion that is used in the vbSPT vs. state array comparison (Fig. S12).
- - `simulate_fbm.py` generates a sequence of SPT movies with different fractional Brownian motion models (and no state transitions), with and without motion blur. It is used in Fig. S13.
+ - `simulate_fbm.py` generates a sequence of SPT movies with different fractional Brownian motion models. Each simulation is performed with and without motion blur, to assess the consequence of motion blur for parameter recovery. It is used in Fig. S13.
