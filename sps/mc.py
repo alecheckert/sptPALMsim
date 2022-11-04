@@ -47,11 +47,13 @@ class MarkovChain:
 
         """
         if self.is_diag(self.P):
-            return np.diag(self.TM) / self.TM.sum()
+            out = np.diag(self.TM) / self.TM.sum()
         else:
             L, V = np.linalg.eig(self.P.T)
             v = V[:,np.argmin(np.abs(L-1.0))]
-            return v / v.sum()
+            out = v / v.sum()
+        print(f"Stationary distribution: {out}")
+        return out
  
     def __call__(self, n: int, initial: int=None) -> np.ndarray:
         """
