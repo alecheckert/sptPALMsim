@@ -242,6 +242,11 @@ class SPTSimulator:
         tracks_df["y0"] = tracks_df["y"] / self.pixel_size
         tracks_df["x0"] = tracks_df["x"] / self.pixel_size
 
+        # Only true for models with zero state transitions
+        tracks_df["state"] = tracks_df["trajectory"].map(
+            pd.Series(states[:,0].astype(np.int64), index=np.arange(n_tracks))
+        )
+
         # Format summary trajectories (akin to what would be seen for a typical
         # tracking movie, averaging over positions in each pulse)
         tracks_sum = tracks_df[tracks_df["pulse_idx"] > 0]

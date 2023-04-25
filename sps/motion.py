@@ -105,7 +105,7 @@ class Motion(ABC):
         n_tracks, n_frames, n_dim = tracks.shape 
 
         # Start with all fluorophores active
-        bleached = np.zeros(n_tracks, dtype=np.bool)
+        bleached = np.zeros(n_tracks, dtype=bool)
 
         # At each frame, if a particle is bleached, it stays bleached.
         # Otherwise, it bleaches with probability *bleach_prob*.
@@ -277,6 +277,7 @@ class FractionalBrownianMotion(Motion):
         mean = np.zeros(n_frames, dtype=np.float64)
 
         for i, n in enumerate(tracks_per_state):
+            print(f"  simulating state {i+1}/{n_states} ({n} trajectories)...")
             T = np.zeros((n, n_frames, 3), dtype=np.float64)
             cov = make_covariance_matrix(self.diff_coefs[i], self.hurst_pars[i])
             for d in range(3):
