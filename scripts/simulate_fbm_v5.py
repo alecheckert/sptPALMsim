@@ -11,7 +11,7 @@ def simulate_fbm_v5():
 
     Same intensity and density for all simulations; 16 replicates per condition."""
     # Relative path to output directory
-    out_dir = "fbm_simulations_v5"
+    out_dir = "fbm_simulations_v5_pt5"
 
     # Frame interval in seconds
     frame_interval = 0.01
@@ -39,6 +39,16 @@ def simulate_fbm_v5():
             np.array([0.05, 2.0, 10.0]),
             np.array([0.25, 0.25, 0.5])
         ),
+        # Model 4 (two-state, equal occupations)
+        (
+            np.array([0.1, 7.0]),
+            np.array([0.5, 0.5]),
+        ),
+        # Model 5 (like model 4, but with faster state a little faster)
+        (
+            np.array([0.1, 10.0]),
+            np.array([0.5, 0.5]),
+        ),
     ]
 
     # Total number of trajectories to simulate
@@ -48,7 +58,7 @@ def simulate_fbm_v5():
     psf_intensity = 125.0
 
     # Number of replicates to do for each dynamical model
-    n_replicates = 16
+    n_replicates = 128
     
     # Number of frames per simulation
     n_frames = 100
@@ -57,7 +67,7 @@ def simulate_fbm_v5():
     gpu = None
 
     # Simulation to start at 
-    start_idx = 0
+    start_idx = 128 * 4
 
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
@@ -78,7 +88,7 @@ def simulate_fbm_v5():
     c = 0
     for model_index, model in enumerate(DYNAMICAL_MODELS):
         diff_coefs, occs = model
-        for replicate in range(n_replicates):
+        for replicate in range(64, 64+n_replicates):
             if c < start_idx:
                 print(f"Skipping simulation {c+1}/{n_simulations}")
                 c += 1

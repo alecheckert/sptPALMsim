@@ -5,7 +5,7 @@ channels:
   - defaults
 dependencies:
   - python=3.9
-  # - cupy
+  - cupy
   - dask
   - matplotlib
   - numpy
